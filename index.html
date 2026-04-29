@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Platform Scheduler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>🚆 NexusRail</h2>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" onclick="switchTab('dashboard', event)">Dashboard</a>
+                <a href="#" class="nav-item" onclick="switchTab('platforms', event)">Platform View</a>
+                <a href="#" class="nav-item" onclick="switchTab('analytics', event)">Analytics</a>
+                <a href="#" class="nav-item" onclick="switchTab('cityPlatforms', event)">City Mapping</a>
+            </nav>
+            <div class="actions">
+                <button class="btn btn-primary btn-block" onclick="openModal('addModal')">+ Add Train</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <div class="header-left">
+                    <h1 id="pageTitle">Live Train Schedule</h1>
+                    <input type="text" id="searchInput" placeholder="Search trains..." class="search-bar" onkeyup="handleSearch()">
+                </div>
+                <div class="header-tools">
+                    <button class="btn btn-secondary" onclick="exportReport()">📥 Export</button>
+                    <button class="btn btn-secondary" onclick="openModal('delayModal')">⏱️ Add Delay</button>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <section id="dashboard" class="view active">
+                <div class="card glass-panel">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Train No.</th>
+                                <th>Name</th>
+                                <th>Route</th>
+                                <th>Driver</th>
+                                <th>Arrival</th>
+                                <th>Departure</th>
+                                <th>Platform</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Platforms View -->
+            <section id="platforms" class="view" style="display: none;">
+                <div class="platforms-grid" id="platformsContainer">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+
+            <!-- Analytics View -->
+            <section id="analytics" class="view" style="display: none;">
+                <div class="stats-grid" id="statsContainer">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="card glass-panel" style="margin-top: 2rem; padding: 2rem;">
+                    <h3 style="margin-bottom: 1.5rem;">Driver Workload</h3>
+                    <div id="driverStatsContainer" class="driver-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- City Platforms View -->
+            <section id="cityPlatforms" class="view" style="display: none;">
+                <div class="card glass-panel" style="padding: 2rem;">
+                    <h2 style="margin-bottom: 1.5rem;">Manage City Platform Names</h2>
+                    <form id="cityPlatformForm" onsubmit="handleAddCityPlatform(event)" class="city-form">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Destination City</label>
+                            <input type="text" id="cpCity" placeholder="e.g., New York" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Custom Platform Name</label>
+                            <input type="text" id="cpName" placeholder="e.g., Grand Central" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="height: fit-content;">Assign Name</button>
+                    </form>
+                    
+                    <table class="data-table" style="margin-top: 2rem;">
+                        <thead>
+                            <tr>
+                                <th>City</th>
+                                <th>Custom Platform Name</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cityPlatformTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="addModal" class="modal">
+        <div class="modal-content glass-panel">
+            <span class="close" onclick="closeModal('addModal')">&times;</span>
+            <h2 id="modalTitle" style="margin-bottom: 1.5rem;">Add New Train</h2>
+            <form id="trainForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="editOriginalNumber" value="">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Train Number</label>
+                        <input type="text" id="tNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Train Name</label>
+                        <input type="text" id="tName" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Source City</label>
+                        <input type="text" id="tSource" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Destination City</label>
+                        <input type="text" id="tDest" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Driver Name</label>
+                    <input type="text" id="tDriver" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Arrival Time (e.g., 14:30)</label>
+                        <input type="time" id="tArr" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Departure Time</label>
+                        <input type="time" id="tDep" required>
+                    </div>
+                </div>
+
+                <div class="form-group checkbox-group" style="margin-top: 1rem; margin-bottom: 2rem;">
+                    <input type="checkbox" id="tVip">
+                    <label for="tVip">VIP / Emergency Priority (Assign to Platform 1)</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Save Train Schedule</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delay Modal -->
+    <div id="delayModal" class="modal">
+        <div class="modal-content glass-panel">
+            <span class="close" onclick="closeModal('delayModal')">&times;</span>
+            <h2 style="margin-bottom: 1.5rem;">Add Route Delay</h2>
+            <form id="delayForm" onsubmit="handleAddDelay(event)">
+                <div class="form-group">
+                    <label>Train Number</label>
+                    <input type="text" id="dNumber" required>
+                </div>
+                <div class="form-group">
+                    <label>Delay in Minutes</label>
+                    <input type="number" id="dMins" required>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-block">Apply Route Delay</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
